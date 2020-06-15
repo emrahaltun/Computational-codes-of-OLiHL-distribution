@@ -1,0 +1,216 @@
+############OLiHL#####
+pdf=function(par,x)
+{
+lambda=par[1]
+g=2*exp(-x)/(1+exp(-x))^2
+G=(1-exp(-x))/(1+exp(-x))
+f=lambda^2*g/((1+lambda)*(1-G)^3)*exp(-lambda*G/(1-G))
+return(f)
+}
+
+cdf=function(par,x)
+{
+lambda=par[1]
+g=2*exp(-x)/(1+exp(-x))^2
+G=(1-exp(-x))/(1+exp(-x))
+f=1-(lambda+(1-G))/((1+lambda)*(1-G))*exp(-lambda*G/(1-G))
+return(f)
+}
+######################EHL#####
+cdfehl=function(par,x)
+{
+lambda=par[1]
+g=2*exp(-x)/(1+exp(-x))^2
+G=(1-exp(-x))/(1+exp(-x))
+f=G^lambda
+return(f)
+}
+
+pdfehl=function(par,x)
+{
+lambda=par[1]
+g=2*exp(-x)/(1+exp(-x))^2
+G=(1-exp(-x))/(1+exp(-x))
+f=lambda*g*G^(lambda-1)
+return(f)
+}
+#############GHL############
+cdfghl=function(par,x)
+{
+lambda=par[1]
+f=1-((2*exp(-x))/(1+exp(-x)))^lambda
+return(f)
+}
+
+pdfghl=function(par,x)
+{
+lambda=par[1]
+f=2^lambda*lambda*exp(x)*(1/(exp(x)+1))^(lambda+1)
+return(f)
+}
+#############Lindley############
+cdflind=function(par,x)
+{
+lambda=par[1]
+f=1-(1+lambda*x/(1+lambda))*exp(-lambda*x)
+return(f)
+}
+
+pdflind=function(par,x)
+{
+lambda=par[1]
+
+f=lambda^2/(lambda+1)*(1+x)*exp(-lambda*x)
+return(f)
+}
+#############Inverselindley############
+cdfilind=function(par,x)
+{
+theta=par[1]
+f=(1+theta/((1+theta)*x))*exp(-theta/x)
+return(f)
+}
+
+pdfilind=function(par,x)
+{
+theta=par[1]
+
+f=theta^2/(1+theta)*((1+x)/x^3)*exp(-theta/x)
+return(f)
+}
+#############Exp############
+cdfexp=function(par,x)
+{
+lambda=par[1]
+f=1-exp(-lambda*x)
+return(f)
+}
+
+pdfexp=function(par,x)
+{
+lambda=par[1]
+
+f=lambda*exp(-lambda*x)
+return(f)
+}
+
+#############THL############
+cdfthl=function(par,x)
+{
+lambda=par[1]
+f=(exp(x)-1)*(1+2*lambda+exp(x))/(1+exp(x))^2
+return(f)
+}
+
+pdfthl=function(par,x)
+{
+lambda=par[1]
+
+f=2*exp(x)*((1-lambda)*exp(x)+3*lambda+1)/(1+exp(x))^3
+return(f)
+}
+
+logl=function(par,data){
+lambda=par[1]
+-sum(log(pdfthl(par,data)))
+}
+
+logl2=function(x){
+lambda=x[1]
+-sum(log(pdfthl(x,data2)))
+}
+
+#############################
+#############################
+foli=goodness.fit(pdf=pdf, cdf=cdf,
+starts = c(1), data = data2,		
+method="N", domain=c(0,Inf))
+
+fghl=goodness.fit(pdf=pdfghl, cdf=cdfghl,
+starts = c(0.5), data = data2,		
+method="N", domain=c(0,Inf))
+
+fehl=goodness.fit(pdf=pdfehl, cdf=cdfehl,
+starts = c(3), data = data2,		
+method="N", domain=c(0,Inf))
+
+
+flind=goodness.fit(pdf=pdflind, cdf=cdflind,
+starts = c(2), data = data2,		
+method="N", domain=c(0,Inf))
+
+filind=goodness.fit(pdf=pdfilind, cdf=cdfilind,
+starts = c(2), data = data2,		
+method="N", domain=c(0,Inf))
+
+fexp=goodness.fit(pdf=pdfexp, cdf=cdfexp,
+starts = c(2), data = data2,		
+method="N", domain=c(0,Inf))
+###############
+fthl=constrOptim(theta=c(0.9),f=logl,data=data2,grad=NULL,ui=rbind(c(1),c(-1)),ci=c(0,-1))
+#############
+hist(data2, freq = FALSE,main="",xlab="x",
+ylab="f(x)",ylim=c(0,0.7),lwd=1,col="white")
+
+curve(pdf(foli$mle,x),0,10,add=T,col="1",lwd=2,lty=1)
+curve(pdfghl(fghl$mle,x),0,10,add=T,col="2",lwd=2,lty=1)
+curve(pdfehl(fehl$mle,x),0,10,add=T,col="3",lwd=2,lty=1)
+curve(pdflind(flind$mle,x),0,10,add=T,col="1",lwd=2,lty=2)
+curve(pdfilind(filind$mle,x),0,10,add=T,col="2",lwd=2,lty=2)
+curve(pdfexp(fexp$mle,x),0,10,add=T,col="3",lwd=2,lty=2)
+curve(pdfthl(fthl$par,x),0,10,add=T,col="4",lwd=2,lty=3)
+
+legend(x ="topright",y="topright",c("OLiHL","GHL","EHL","Li","ILi","Exp","THL"),cex=1,lty=c(1,1,1,2,2,2,3),lwd=2, col=c(1,2,3,1,2,3,4)) 
+
+
+##########################
+############################
+#####BrX-GHN reg model##########
+############################
+##install.packages('Bolstad2')
+library(Bolstad2)
+
+data(AidsSurvival.df)
+x5=AidsSurvival.df[,4]
+xx=AidsSurvival.df[,5]
+xx1=AidsSurvival.df[,6]
+censur=AidsSurvival.df[,7]
+xxx=seq(from = 1, to = 1,length.out=NROW(xx))
+
+sy=function(par)
+{
+lambda=par[1]
+sigma=par[2]
+beta0=par[3]
+beta1=par[4]
+beta2=par[5]
+
+mu=exp(beta0*xxx+beta1*xx+beta2*xx1)
+y=exp((x-mu)/sigma)
+
+f=1-(lambda*exp(y)+lambda+2)/(2*(lambda+1))*exp(-lambda/2*(exp(y)-1))
+return(f)
+}
+
+fx=function(par)
+{
+lambda=par[1]
+sigma=par[2]
+beta0=par[3]
+beta1=par[4]
+beta2=par[5]
+
+x=log(x5)
+mu=exp(beta0*xxx+beta1*xx+beta2*xx1)
+y=exp((x-mu)/sigma)
+f=sigma^-1*(lambda^2*(1+exp(y))/(4*(1+lambda))*exp(-lambda/2*(exp(y)-1)+y))
+return(f)
+}
+
+logp=function(par) {
+-sum((censur)*log(fx(par)))-sum((1-censur)*log(sy(par)))
+}
+
+init=c(15,5.066, 7.085, -0.089, -0.5)
+
+f11=optim(par=init,fn=logp,method="N",hessian=T)
